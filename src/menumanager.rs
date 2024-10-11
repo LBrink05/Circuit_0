@@ -6,10 +6,7 @@ pub enum GameState {
     #[default]
     Splash,
     Menu,
-    Play,
-    ContinueGame,
-    LoadGame,
-    NewGame
+    Game,
     
 }
 
@@ -54,6 +51,10 @@ pub mod splash {
     struct SplashTimer(Timer);
  
     fn splash_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
+
+        // Insert the timer as a resource (did 0.0 to skip splash screen during development)
+        commands.insert_resource(SplashTimer(Timer::from_seconds(0.0, TimerMode::Once)));
+
         let icon = asset_server.load("branding/icon.png");
         // Display the logo
         commands
@@ -81,8 +82,6 @@ pub mod splash {
                     ..default()
                 });
             });
-        // Insert the timer as a resource
-        commands.insert_resource(SplashTimer(Timer::from_seconds(1.0, TimerMode::Once)));
     }
 
     // Tick the timer, and change state when finished
@@ -111,9 +110,9 @@ pub mod game {
     // This plugin will contain the game. In this case, it's just be a screen that will
     // display the current settings for 5 seconds before returning to the menu
     pub fn game_plugin(app: &mut App) {
-        app.add_systems(OnEnter(GameState::ContinueGame), game_setup)
-            .add_systems(Update, game.run_if(in_state(GameState::ContinueGame)))
-            .add_systems(OnExit(GameState::ContinueGame), despawn_screen::<OnGameScreen>);
+        app.add_systems(OnEnter(GameState::Game), game_setup)
+            .add_systems(Update, game.run_if(in_state(GameState::Game)))
+            .add_systems(OnExit(GameState::Game), despawn_screen::<OnGameScreen>);
     }
 
     // Tag component used to tag entities added on the game screen
@@ -331,9 +330,8 @@ pub mod menu {
     #[derive(Component)]
     struct OnPlayNewGameScreen;
 
-
     const NORMAL_BUTTON: Color = Color::srgb(0.15, 0.15, 0.15);
-    const HOVERED_BUTTON: Color = Color::srgb(0.25, 0.25, 0.25);
+    const HOVERED_BUTTON: Color = Color::srgb(0.25, 0.25, 1.0);
     const HOVERED_PRESSED_BUTTON: Color = Color::srgb(0.25, 0.65, 0.25);
     const PRESSED_BUTTON: Color = Color::srgb(0.35, 0.75, 0.35);
 
@@ -562,6 +560,7 @@ pub mod menu {
                         justify_content: JustifyContent::Center,
                         ..default()
                     },
+                    background_color: CRIMSON.into(),
                     ..default()
                 },
                 OnSettingsMenuScreen,
@@ -574,9 +573,12 @@ pub mod menu {
                             height: Val::Percent(100.0),
                             flex_direction: FlexDirection::Column,
                             align_items: AlignItems::Center,
+                            margin: UiRect {
+                                top: Val::Percent(28.2), // Adjust this value as needed to adjust top margin
+                                ..default()
+                            },
                             ..default()
                         },
-                        background_color: CRIMSON.into(),
                         ..default()
                     })
                     .with_children(|parent| {
@@ -837,6 +839,7 @@ pub mod menu {
                         justify_content: JustifyContent::Center,
                         ..default()
                     },
+                    background_color: CRIMSON.into(),
                     ..default()
                 },
                 OnPlayMenuScreen,
@@ -849,9 +852,13 @@ pub mod menu {
                             height: Val::Percent(100.0),
                             flex_direction: FlexDirection::Column,
                             align_items: AlignItems::Center,
+                            margin: UiRect {
+                                top: Val::Percent(20.0), // Adjust this value as needed to adjust top margin
+                                ..default()
+                            },
                             ..default()
                         },
-                        background_color: CRIMSON.into(),
+                        
                         ..default()
                     })
                     .with_children(|parent| {
@@ -899,15 +906,15 @@ pub mod menu {
                     }
                     MenuButtonAction::Play => menu_state.set(MenuState::Play),
                     MenuButtonAction::ContinueGame => {
-                        game_state.set(GameState::ContinueGame);
+                        game_state.set(GameState::Game);
                         menu_state.set(MenuState::Disabled);
                     }
                     MenuButtonAction::LoadGame => {
-                        game_state.set(GameState::LoadGame);
+                        game_state.set(GameState::Game);
                         menu_state.set(MenuState::Disabled);
                     }
                     MenuButtonAction::NewGame => {
-                        game_state.set(GameState::NewGame);
+                        game_state.set(GameState::Game);
                         menu_state.set(MenuState::Disabled);
                     }
         
