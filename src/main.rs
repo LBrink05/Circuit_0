@@ -2,13 +2,9 @@
 use bevy::DefaultPlugins;
 use bevy::prelude::*;
 
-//custom libs
+//custom mods
 pub mod menumanager;
 pub mod textstyle;
-
-
-
-
 
 fn main() {
     App::new()
@@ -16,10 +12,12 @@ fn main() {
         // Insert as resource the initial value for the settings resources
         .insert_resource(menumanager::DisplayQuality::Medium)
         .insert_resource(menumanager::Volume(7))
+
         // Declare the game state, whose starting value is determined by the `Default` trait
         .init_state::<menumanager::GameState>()
         .add_systems(Startup, setup)
         // Adds the plugins for each state
+        .add_plugins(textstyle::font_plugin)
         .add_plugins((menumanager::splash::splash_plugin, menumanager::menu::menu_plugin, menumanager::game::game_plugin))
         .run();
 }
