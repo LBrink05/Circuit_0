@@ -5,6 +5,7 @@ use bevy::prelude::*;
 //custom mods
 pub mod menumanager;
 pub mod textstyle;
+pub mod game;
 
 fn main() {
     App::new()
@@ -17,7 +18,9 @@ fn main() {
         .init_state::<menumanager::GameState>()
         .add_systems(Startup, setup)
         // Adds the plugins for each state
+        //textstyle
         .add_plugins(textstyle::font_plugin)
+        //menumanager
         .add_plugins((menumanager::splash::splash_plugin, menumanager::menu::menu_plugin, menumanager::game::game_plugin))
         .run();
 }

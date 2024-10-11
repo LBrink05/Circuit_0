@@ -1,4 +1,4 @@
-use bevy::{prelude::*};
+use bevy::prelude::*;
 
 // Enum that will be used as a global state for the game
 #[derive(Clone, Copy, Default, Eq, PartialEq, Debug, Hash, States)]
@@ -6,7 +6,11 @@ pub enum GameState {
     #[default]
     Splash,
     Menu,
-    Game,
+    Play,
+    ContinueGame,
+    LoadGame,
+    NewGame
+    
 }
 
 // One of the two settings that can be set through the menu. It will be a resource in the app
@@ -24,12 +28,10 @@ pub struct Volume(pub u32);
 //Text properties //FIX TOMORROW
 pub static TEXT_COLOR: Color = Color::srgb(0.9, 0.9, 0.9);
 
-
-
 pub mod splash {
     use bevy::prelude::*;
     use super::{despawn_screen, GameState};
-    use crate::textstyle::FontECS;
+    //use crate::textstyle::FontECS;
 
     // This plugin will display a splash screen with Bevy logo for 1 second before switching to the menu
     pub fn splash_plugin(app: &mut App) {
@@ -109,9 +111,9 @@ pub mod game {
     // This plugin will contain the game. In this case, it's just be a screen that will
     // display the current settings for 5 seconds before returning to the menu
     pub fn game_plugin(app: &mut App) {
-        app.add_systems(OnEnter(GameState::Game), game_setup)
-            .add_systems(Update, game.run_if(in_state(GameState::Game)))
-            .add_systems(OnExit(GameState::Game), despawn_screen::<OnGameScreen>);
+        app.add_systems(OnEnter(GameState::ContinueGame), game_setup)
+            .add_systems(Update, game.run_if(in_state(GameState::ContinueGame)))
+            .add_systems(OnExit(GameState::ContinueGame), despawn_screen::<OnGameScreen>);
     }
 
     // Tag component used to tag entities added on the game screen
@@ -238,7 +240,7 @@ pub mod menu {
 
 
     // This plugin manages the menu, with 5 different screens:
-    // - a main menu with "New Game", "Settings", "Quit"
+    // - a main menu with "Play", "Settings", "Quit"
     // - a settings menu with two submenus and a back button
     // - two settings screen with a setting that can be set and a back button
     pub fn menu_plugin(app: &mut App) {
@@ -257,6 +259,9 @@ pub mod menu {
                 OnExit(MenuState::Settings),
                 despawn_screen::<OnSettingsMenuScreen>,
             )
+            //Systems to handle the Play menu screen
+            .add_systems(OnEnter(MenuState::Play), play_menu_setup)
+            .add_systems(OnExit(MenuState::Play), despawn_screen::<OnPlayMenuScreen>)
             // Systems to handle the display settings screen
             .add_systems(
                 OnEnter(MenuState::SettingsDisplay),
@@ -294,6 +299,9 @@ pub mod menu {
         Settings,
         SettingsDisplay,
         SettingsSound,
+        Play,
+        NewGame,
+        LoadGame,
         #[default]
         Disabled,
     }
@@ -314,6 +322,16 @@ pub mod menu {
     #[derive(Component)]
     struct OnSoundSettingsMenuScreen;
 
+    #[derive(Component)]
+    struct OnPlayMenuScreen;
+
+    #[derive(Component)]
+    struct OnPlayLoadGameMenuScreen;
+
+    #[derive(Component)]
+    struct OnPlayNewGameScreen;
+
+
     const NORMAL_BUTTON: Color = Color::srgb(0.15, 0.15, 0.15);
     const HOVERED_BUTTON: Color = Color::srgb(0.25, 0.25, 0.25);
     const HOVERED_PRESSED_BUTTON: Color = Color::srgb(0.25, 0.65, 0.25);
@@ -327,6 +345,9 @@ pub mod menu {
     #[derive(Component)]
     enum MenuButtonAction {
         Play,
+        ContinueGame,
+        LoadGame,
+        NewGame,
         Settings,
         SettingsDisplay,
         SettingsSound,
@@ -447,7 +468,7 @@ pub mod menu {
                         );
 
                         // Display three buttons for each action available from the main menu:
-                        // - new game
+                        // - play
                         // - settings
                         // - quit
                         parent
@@ -467,7 +488,7 @@ pub mod menu {
                                     ..default()
                                 });*/
                                 parent.spawn(TextBundle::from_section(
-                                    "New Game",
+                                    "Play",
                                     button_text_style.clone(),
                                 ));
                             });
@@ -481,12 +502,12 @@ pub mod menu {
                                 MenuButtonAction::Settings,
                             ))
                             .with_children(|parent| {
-                                let icon = asset_server.load("textures/Game Icons/cog.png");
+                                /*let icon = asset_server.load("textures/Game Icons/cog.png");
                                 parent.spawn(ImageBundle {
                                     style: button_icon_style.clone(),
                                     image: UiImage::new(icon),
                                     ..default()
-                                });
+                                });*/
                                 parent.spawn(TextBundle::from_section(
                                     "Settings",
                                     button_text_style.clone(),
@@ -502,12 +523,12 @@ pub mod menu {
                                 MenuButtonAction::Quit,
                             ))
                             .with_children(|parent| {
-                                let icon = asset_server.load("textures/Game Icons/exitRight.png");
+                                /*let icon = asset_server.load("textures/Game Icons/exitRight.png");
                                 parent.spawn(ImageBundle {
                                     style: button_icon_style,
                                     image: UiImage::new(icon),
                                     ..default()
-                                });
+                                });*/
                                 parent.spawn(TextBundle::from_section("Quit", button_text_style));
                             });
                     });
@@ -789,6 +810,78 @@ pub mod menu {
             });
     }
 
+    fn play_menu_setup (mut commands: Commands, fontecs: Res<FontECS>) {
+        let button_style = Style {
+            width: Val::Px(200.0),
+            height: Val::Px(65.0),
+            margin: UiRect::all(Val::Px(20.0)),
+            justify_content: JustifyContent::Center,
+            align_items: AlignItems::Center,
+            ..default()
+        };
+
+        let button_text_style = TextStyle {
+            font_size: 40.0,
+            font: fontecs.fonthandle_1.clone(),
+            color: TEXT_COLOR,
+            ..default()
+        };
+
+        commands
+            .spawn((
+                NodeBundle {
+                    style: Style {
+                        width: Val::Percent(100.0),
+                        height: Val::Percent(100.0),
+                        align_items: AlignItems::Center,
+                        justify_content: JustifyContent::Center,
+                        ..default()
+                    },
+                    ..default()
+                },
+                OnPlayMenuScreen,
+            ))
+            .with_children(|parent| {
+                parent
+                    .spawn(NodeBundle {
+                        style: Style {
+                            width:  Val::Percent(100.0),
+                            height: Val::Percent(100.0),
+                            flex_direction: FlexDirection::Column,
+                            align_items: AlignItems::Center,
+                            ..default()
+                        },
+                        background_color: CRIMSON.into(),
+                        ..default()
+                    })
+                    .with_children(|parent| {
+                        for (action, text) in [
+                            (MenuButtonAction::ContinueGame, "Continue"),
+                            (MenuButtonAction::LoadGame, "Load Game"),
+                            (MenuButtonAction::NewGame, "New Game"),
+                            (MenuButtonAction::BackToMainMenu, "Back")
+
+                        ] {
+                            parent
+                                .spawn((
+                                    ButtonBundle {
+                                        style: button_style.clone(),
+                                        background_color: NORMAL_BUTTON.into(),
+                                        ..default()
+                                    },
+                                    action,
+                                ))
+                                .with_children(|parent| {
+                                    parent.spawn(TextBundle::from_section(
+                                        text,
+                                        button_text_style.clone(),
+                                    ));
+                                });
+                        }
+                    });
+            });
+    }
+
     fn menu_action(
         interaction_query: Query<
             (&Interaction, &MenuButtonAction),
@@ -804,10 +897,20 @@ pub mod menu {
                     MenuButtonAction::Quit => {
                         app_exit_events.send(AppExit::Success);
                     }
-                    MenuButtonAction::Play => {
-                        game_state.set(GameState::Game);
+                    MenuButtonAction::Play => menu_state.set(MenuState::Play),
+                    MenuButtonAction::ContinueGame => {
+                        game_state.set(GameState::ContinueGame);
                         menu_state.set(MenuState::Disabled);
                     }
+                    MenuButtonAction::LoadGame => {
+                        game_state.set(GameState::LoadGame);
+                        menu_state.set(MenuState::Disabled);
+                    }
+                    MenuButtonAction::NewGame => {
+                        game_state.set(GameState::NewGame);
+                        menu_state.set(MenuState::Disabled);
+                    }
+        
                     MenuButtonAction::Settings => menu_state.set(MenuState::Settings),
                     MenuButtonAction::SettingsDisplay => {
                         menu_state.set(MenuState::SettingsDisplay);
@@ -819,6 +922,7 @@ pub mod menu {
                     MenuButtonAction::BackToSettings => {
                         menu_state.set(MenuState::Settings);
                     }
+
                 }
             }
         }
