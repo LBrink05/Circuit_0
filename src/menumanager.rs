@@ -1,9 +1,9 @@
 use bevy::prelude::*;
-
 // Enum that will be used as a global state for the game
 #[derive(Clone, Copy, Default, Eq, PartialEq, Debug, Hash, States)]
 pub enum GameState {
     #[default]
+    PreSplash,
     Splash,
     Menu,
     Game,
@@ -24,11 +24,12 @@ pub struct Volume(pub u32);
 
 //Text properties //FIX TOMORROW
 pub static TEXT_COLOR: Color = Color::srgb(0.9, 0.9, 0.9);
+pub static BACKGROUND_COLOR: Color = Color::srgb(0.72, 0.0, 0.24);
 
 pub mod splash {
     use bevy::prelude::*;
-    use super::{despawn_screen, GameState};
-    //use crate::textstyle::FontECS;
+    use super::{despawn_screen, GameState, TEXT_COLOR, BACKGROUND_COLOR};
+    use crate::textstyle::FontECS;
 
     // This plugin will display a splash screen with Bevy logo for 1 second before switching to the menu
     pub fn splash_plugin(app: &mut App) {
@@ -50,10 +51,10 @@ pub mod splash {
     #[derive(Resource, Deref, DerefMut)]
     struct SplashTimer(Timer);
  
-    fn splash_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
+    fn splash_setup(mut commands: Commands, asset_server: Res<AssetServer>, fontecs: Res<FontECS>) {
 
         // Insert the timer as a resource (did 0.0 to skip splash screen during development)
-        commands.insert_resource(SplashTimer(Timer::from_seconds(0.0, TimerMode::Once)));
+        commands.insert_resource(SplashTimer(Timer::from_seconds(1.0, TimerMode::Once)));
 
         let icon = asset_server.load("branding/icon.png");
         // Display the logo
@@ -67,6 +68,7 @@ pub mod splash {
                         height: Val::Percent(100.0),
                         ..default()
                     },
+                    background_color: BACKGROUND_COLOR.into(),
                     ..default()
                 },
                 OnSplashScreen,
@@ -81,8 +83,24 @@ pub mod splash {
                     image: UiImage::new(icon),
                     ..default()
                 });
-            });
+                // Display the Engine name
+                parent.spawn(TextBundle::from_section(
+                        "Bevy",
+                        TextStyle {
+                            font_size: 80.0,
+                            font: fontecs.fonthandle_1.clone(),
+                            color: TEXT_COLOR,
+                            ..default()
+                        },
+                    )
+                    .with_style(Style {
+                        margin: UiRect::all(Val::Percent(5.0)),
+                        ..default()
+                    })
+                );
+        });
     }
+
 
     // Tick the timer, and change state when finished
     fn countdown(
@@ -94,147 +112,42 @@ pub mod splash {
             game_state.set(GameState::Menu);
         }
     }
+
 }
 
 
 pub mod game {
-    use bevy::{
-        color::palettes::basic::{BLUE, LIME},
-        prelude::*,
-    };
-    use super::{despawn_screen, DisplayQuality, GameState, Volume, TEXT_COLOR};
+    use bevy::prelude::*;
+    use super::{despawn_screen, DisplayQuality, GameState, Volume};
     use crate::textstyle::FontECS;
+    use crate::game;
 
+     // Tag component used to tag entities added on the game screen
+     #[derive(Component)]
+     struct OnGameScreen;
+ 
+    //setup menu wise
+    fn game_setup(
+        mut _commands: Commands,
+        _display_quality: Res<DisplayQuality>,
+        _volume: Res<Volume>,
+        _fontecs: Res<FontECS>
+    ) {
+        println!("Starting Game.");
+    }
 
-
-    // This plugin will contain the game. In this case, it's just be a screen that will
-    // display the current settings for 5 seconds before returning to the menu
+    // This plugin will contain the game. FIX GAME LOOP TOMORROW
     pub fn game_plugin(app: &mut App) {
-        app.add_systems(OnEnter(GameState::Game), game_setup)
-            .add_systems(Update, game.run_if(in_state(GameState::Game)))
+        app.add_systems(OnEnter(GameState::Game), (game_setup, game::game_setup))
+            .add_systems(Update, game::game_core_plugin.run_if(in_state(GameState::Game)))
             .add_systems(OnExit(GameState::Game), despawn_screen::<OnGameScreen>);
     }
 
-    // Tag component used to tag entities added on the game screen
-    #[derive(Component)]
-    struct OnGameScreen;
-
-    #[derive(Resource, Deref, DerefMut)]
-    struct GameTimer(Timer);
-
-    fn game_setup(
-        mut commands: Commands,
-        display_quality: Res<DisplayQuality>,
-        volume: Res<Volume>,
-        fontecs: Res<FontECS>
-    ) {
-
-        commands
-            .spawn((
-                NodeBundle {
-                    style: Style {
-                        width: Val::Percent(100.0),
-                        height: Val::Percent(100.0),
-                        // center children
-                        align_items: AlignItems::Center,
-                        justify_content: JustifyContent::Center,
-                        ..default()
-                    },
-                    ..default()
-                },
-                OnGameScreen,
-            ))
-            .with_children(|parent| {
-                // First create a `NodeBundle` for centering what we want to display
-                parent
-                    .spawn(NodeBundle {
-                        style: Style {
-                            width:  Val::Percent(100.0),
-                            height: Val::Percent(100.0),
-                            // This will display its children in a column, from top to bottom
-                            flex_direction: FlexDirection::Column,
-                            // `align_items` will align children on the cross axis. Here the main axis is
-                            // vertical (column), so the cross axis is horizontal. This will center the
-                            // children
-                            align_items: AlignItems::Center,
-                            ..default()
-                        },
-                        background_color: Color::BLACK.into(),
-                        ..default()
-                    })
-                    .with_children(|parent| {
-                        // Display two lines of text, the second one with the current settings
-                        parent.spawn(
-                            TextBundle::from_section(
-                                "Will be back to the menu shortly...",
-                                TextStyle {
-                                    font_size: 80.0,
-                                    font: fontecs.fonthandle_1.clone(),
-                                    color: TEXT_COLOR,
-                                    ..default()
-                                },
-                            )
-                            .with_style(Style {
-                                margin: UiRect::all(Val::Px(50.0)),
-                                ..default()
-                            }),
-                        );
-                        parent.spawn(
-                            TextBundle::from_sections([
-                                TextSection::new(
-                                    format!("quality: {:?}", *display_quality),
-                                    TextStyle {
-                                        font_size: 60.0,
-                                        font: fontecs.fonthandle_1.clone(),
-                                        color: BLUE.into(),
-                                        ..default()
-                                    },
-                                ),
-                                TextSection::new(
-                                    " - ",
-                                    TextStyle {
-                                        font_size: 60.0,
-                                        font: fontecs.fonthandle_1.clone(),
-                                        color: TEXT_COLOR,
-                                        ..default()
-                                    },
-                                ),
-                                TextSection::new(
-                                    format!("volume: {:?}", *volume),
-                                    TextStyle {
-                                        font_size: 60.0,
-                                        font: fontecs.fonthandle_1.clone(),
-                                        color: LIME.into(),
-                                        ..default()
-                                    },
-                                ),
-                            ])
-                            .with_style(Style {
-                                margin: UiRect::all(Val::Px(50.0)),
-                                ..default()
-                            }),
-                        );
-                    });
-            });
-        // Spawn a 5 seconds timer to trigger going back to the menu
-        commands.insert_resource(GameTimer(Timer::from_seconds(5.0, TimerMode::Once)));
-    }
-
-    // Tick the timer, and change state when finished
-    fn game(
-        time: Res<Time>,
-        mut game_state: ResMut<NextState<GameState>>,
-        mut timer: ResMut<GameTimer>,
-    ) {
-        if timer.tick(time.delta()).finished() {
-            game_state.set(GameState::Menu);
-        }
-    }
 }
 
 pub mod menu {
-    use bevy::{app::AppExit, color::palettes::css::CRIMSON, prelude::*};
-    use super::{despawn_screen, DisplayQuality, GameState, Volume, TEXT_COLOR};
+    use bevy::{app::AppExit, prelude::*};
+    use super::{despawn_screen, DisplayQuality, GameState, Volume, TEXT_COLOR, BACKGROUND_COLOR};
     use crate::textstyle::FontECS;
 
 
@@ -299,8 +212,8 @@ pub mod menu {
         SettingsDisplay,
         SettingsSound,
         Play,
-        NewGame,
-        LoadGame,
+        _NewGame,
+        _LoadGame,
         #[default]
         Disabled,
     }
@@ -325,10 +238,10 @@ pub mod menu {
     struct OnPlayMenuScreen;
 
     #[derive(Component)]
-    struct OnPlayLoadGameMenuScreen;
+    struct _OnPlayLoadGameMenuScreen;
 
     #[derive(Component)]
-    struct OnPlayNewGameScreen;
+    struct _OnPlayNewGameScreen;
 
     const NORMAL_BUTTON: Color = Color::srgb(0.15, 0.15, 0.15);
     const HOVERED_BUTTON: Color = Color::srgb(0.25, 0.25, 1.0);
@@ -394,7 +307,7 @@ pub mod menu {
         menu_state.set(MenuState::Main);
     }
 
-    fn main_menu_setup(mut commands: Commands, asset_server: Res<AssetServer>, fontecs: Res<FontECS>) {
+    fn main_menu_setup(mut commands: Commands, _asset_server: Res<AssetServer>, fontecs: Res<FontECS>) {
         // Common style for all buttons on the screen
         let button_style = Style {
             width: Val::Px(250.0),
@@ -404,14 +317,14 @@ pub mod menu {
             align_items: AlignItems::Center,
             ..default()
         };
-        let button_icon_style = Style {
+        /*let button_icon_style = Style {
             width: Val::Px(30.0),
             // This takes the icons out of the flexbox flow, to be positioned exactly
             position_type: PositionType::Absolute,
             // The icon will be close to the left border of the button
             left: Val::Px(10.0),
             ..default()
-        };
+        };*/
         let button_text_style = TextStyle {
             font_size: 40.0,
             font: fontecs.fonthandle_1.clone(),
@@ -443,7 +356,7 @@ pub mod menu {
                             align_items: AlignItems::Center,
                             ..default()
                         },
-                        background_color: CRIMSON.into(),
+                        background_color: BACKGROUND_COLOR.into(),
                         
                         ..default()
                     })
@@ -560,7 +473,7 @@ pub mod menu {
                         justify_content: JustifyContent::Center,
                         ..default()
                     },
-                    background_color: CRIMSON.into(),
+                    background_color: BACKGROUND_COLOR.into(),
                     ..default()
                 },
                 OnSettingsMenuScreen,
@@ -648,7 +561,7 @@ pub mod menu {
                             align_items: AlignItems::Center,
                             ..default()
                         },
-                        background_color: CRIMSON.into(),
+                        background_color: BACKGROUND_COLOR.into(),
                         ..default()
                     })
                     .with_children(|parent| {
@@ -662,7 +575,7 @@ pub mod menu {
                                     align_items: AlignItems::Center,
                                     ..default()
                                 },
-                                background_color: CRIMSON.into(),
+                                background_color: BACKGROUND_COLOR.into(),
                                 ..default()
                             })
                             .with_children(|parent| {
@@ -758,7 +671,7 @@ pub mod menu {
                             align_items: AlignItems::Center,
                             ..default()
                         },
-                        background_color: CRIMSON.into(),
+                        background_color: BACKGROUND_COLOR.into(),
                         ..default()
                     })
                     .with_children(|parent| {
@@ -770,7 +683,7 @@ pub mod menu {
                                     align_items: AlignItems::Center,
                                     ..default()
                                 },
-                                background_color: CRIMSON.into(),
+                                background_color: BACKGROUND_COLOR.into(),
                                 ..default()
                             })
                             .with_children(|parent| {
@@ -839,7 +752,7 @@ pub mod menu {
                         justify_content: JustifyContent::Center,
                         ..default()
                     },
-                    background_color: CRIMSON.into(),
+                    background_color: BACKGROUND_COLOR.into(),
                     ..default()
                 },
                 OnPlayMenuScreen,
