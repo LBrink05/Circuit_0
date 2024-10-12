@@ -133,7 +133,7 @@ pub mod game {
         _volume: Res<Volume>,
         _fontecs: Res<FontECS>
     ) {
-        println!("Starting Game.");
+        println!("Hacking into the Mainframe...");
     }
 
     // This plugin will contain the game. FIX GAME LOOP TOMORROW

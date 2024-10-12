@@ -22,14 +22,6 @@ pub fn load_fonts (mut commands: Commands, asset_server: Res<AssetServer>, mut g
     game_state.set(GameState::Splash);
 }
 
-//font plugin
-pub fn font_plugin(app: &mut App) {
-    // As this plugin is managing the splash screen, it will focus on the state `GameState::Splash`
-    app
-        // When entering the state, spawn everything needed for this screen
-        .add_systems(PreStartup, load_fonts);
-
-}
 
     
 
