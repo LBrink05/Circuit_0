@@ -7,7 +7,6 @@ pub enum GameState {
     Splash,
     Menu,
     Game,
-    
 }
 
 // One of the two settings that can be set through the menu. It will be a resource in the app
@@ -27,20 +26,22 @@ pub static TEXT_COLOR: Color = Color::srgb(0.9, 0.9, 0.9);
 pub static BACKGROUND_COLOR: Color = Color::srgb(0.72, 0.0, 0.24);
 
 pub mod splash {
-    use bevy::prelude::*;
-    use super::{despawn_screen, GameState, TEXT_COLOR, BACKGROUND_COLOR};
+    use super::{despawn_screen, GameState, BACKGROUND_COLOR, TEXT_COLOR};
     use crate::textstyle::FontECS;
+    use bevy::prelude::*;
 
-    // This plugin will display a splash screen with Bevy logo for 1 second before switching to the menu
-    pub fn splash_plugin(app: &mut App) {
-        // As this plugin is managing the splash screen, it will focus on the state `GameState::Splash`
-        app
-            // When entering the state, spawn everything needed for this screen
-            .add_systems(OnEnter(GameState::Splash), splash_setup)
-            // While in this state, run the `countdown` system
-            .add_systems(Update, countdown.run_if(in_state(GameState::Splash)))
-            // When exiting the state, despawn everything that was spawned for this screen
-            .add_systems(OnExit(GameState::Splash), despawn_screen::<OnSplashScreen>);
+    pub struct SplashPlugin;
+
+    impl Plugin for SplashPlugin {
+        fn build(&self, app: &mut App) {
+            app
+                // When entering the state, spawn everything needed for this screen
+                .add_systems(OnEnter(GameState::Splash), splash_setup)
+                // While in this state, run the `countdown` system
+                .add_systems(Update, countdown.run_if(in_state(GameState::Splash)))
+                // When exiting the state, despawn everything that was spawned for this screen
+                .add_systems(OnExit(GameState::Splash), despawn_screen::<OnSplashScreen>);
+        }
     }
 
     // Tag component used to tag entities added on the splash screen
@@ -50,9 +51,8 @@ pub mod splash {
     // Newtype to use a `Timer` for this screen as a resource
     #[derive(Resource, Deref, DerefMut)]
     struct SplashTimer(Timer);
- 
-    fn splash_setup(mut commands: Commands, asset_server: Res<AssetServer>, fontecs: Res<FontECS>) {
 
+    fn splash_setup(mut commands: Commands, asset_server: Res<AssetServer>, fontecs: Res<FontECS>) {
         // Insert the timer as a resource (did 0.0 to skip splash screen during development)
         commands.insert_resource(SplashTimer(Timer::from_seconds(1.0, TimerMode::Once)));
 
@@ -84,7 +84,8 @@ pub mod splash {
                     ..default()
                 });
                 // Display the Engine name
-                parent.spawn(TextBundle::from_section(
+                parent.spawn(
+                    TextBundle::from_section(
                         "Bevy",
                         TextStyle {
                             font_size: 80.0,
@@ -96,11 +97,10 @@ pub mod splash {
                     .with_style(Style {
                         margin: UiRect::all(Val::Percent(5.0)),
                         ..default()
-                    })
+                    }),
                 );
-        });
+            });
     }
-
 
     // Tick the timer, and change state when finished
     fn countdown(
@@ -112,24 +112,22 @@ pub mod splash {
             game_state.set(GameState::Menu);
         }
     }
-
 }
 
-
 pub mod game {
-    use bevy::prelude::*;
     use super::{despawn_screen, GameState};
+    use bevy::prelude::*;
     // crate::textstyle::FontECS;
     use crate::game;
 
-     // Tag component used to tag entities added on the game screen
-     #[derive(Component)]
-     struct OnGameScreen;
- 
+    // Tag component used to tag entities added on the game screen
+    #[derive(Component)]
+    struct OnGameScreen;
+
     //return to menu ingame
     fn game_menu(
         keyboardinput: Res<ButtonInput<KeyCode>>,
-        mut game_state: ResMut<NextState<GameState>>
+        mut game_state: ResMut<NextState<GameState>>,
     ) {
         if keyboardinput.just_pressed(KeyCode::Escape) {
             game_state.set(GameState::Menu);
@@ -138,18 +136,15 @@ pub mod game {
 
     // This plugin will contain the game.
     pub fn game_plugin(app: &mut App) {
-        app.add_systems(OnEnter(GameState::Game), game::game_setup)
-            .add_systems(Update, (game_menu,game::game_core_plugin.run_if(in_state(GameState::Game))))
+        app.add_systems(Update, (game_menu,))
             .add_systems(OnExit(GameState::Game), despawn_screen::<OnGameScreen>);
     }
-
 }
 
 pub mod menu {
-    use bevy::{app::AppExit, prelude::*};
-    use super::{despawn_screen, DisplayQuality, GameState, Volume, TEXT_COLOR, BACKGROUND_COLOR};
+    use super::{despawn_screen, DisplayQuality, GameState, Volume, BACKGROUND_COLOR, TEXT_COLOR};
     use crate::textstyle::FontECS;
-
+    use bevy::{app::AppExit, prelude::*};
 
     // This plugin manages the menu, with 5 different screens:
     // - a main menu with "Play", "Settings", "Quit"
@@ -307,7 +302,11 @@ pub mod menu {
         menu_state.set(MenuState::Main);
     }
 
-    fn main_menu_setup(mut commands: Commands, _asset_server: Res<AssetServer>, fontecs: Res<FontECS>) {
+    fn main_menu_setup(
+        mut commands: Commands,
+        _asset_server: Res<AssetServer>,
+        fontecs: Res<FontECS>,
+    ) {
         // Common style for all buttons on the screen
         let button_style = Style {
             width: Val::Px(250.0),
@@ -351,13 +350,13 @@ pub mod menu {
                     .spawn(NodeBundle {
                         style: Style {
                             flex_direction: FlexDirection::Column,
-                            width:  Val::Percent(100.0),
+                            width: Val::Percent(100.0),
                             height: Val::Percent(100.0),
                             align_items: AlignItems::Center,
                             ..default()
                         },
                         background_color: BACKGROUND_COLOR.into(),
-                        
+
                         ..default()
                     })
                     .with_children(|parent| {
@@ -482,7 +481,7 @@ pub mod menu {
                 parent
                     .spawn(NodeBundle {
                         style: Style {
-                            width:  Val::Percent(100.0),
+                            width: Val::Percent(100.0),
                             height: Val::Percent(100.0),
                             flex_direction: FlexDirection::Column,
                             align_items: AlignItems::Center,
@@ -520,8 +519,11 @@ pub mod menu {
             });
     }
 
-    fn display_settings_menu_setup(mut commands: Commands, display_quality: Res<DisplayQuality>, fontecs: Res<FontECS>) {
-
+    fn display_settings_menu_setup(
+        mut commands: Commands,
+        display_quality: Res<DisplayQuality>,
+        fontecs: Res<FontECS>,
+    ) {
         let button_style = Style {
             width: Val::Px(200.0),
             height: Val::Px(65.0),
@@ -555,7 +557,7 @@ pub mod menu {
                 parent
                     .spawn(NodeBundle {
                         style: Style {
-                            width:  Val::Percent(100.0),
+                            width: Val::Percent(100.0),
                             height: Val::Percent(100.0),
                             flex_direction: FlexDirection::Column,
                             align_items: AlignItems::Center,
@@ -570,7 +572,7 @@ pub mod menu {
                         parent
                             .spawn(NodeBundle {
                                 style: Style {
-                                    width:  Val::Percent(100.0),
+                                    width: Val::Percent(100.0),
                                     height: Val::Percent(100.0),
                                     align_items: AlignItems::Center,
                                     ..default()
@@ -630,8 +632,11 @@ pub mod menu {
             });
     }
 
-    fn sound_settings_menu_setup(mut commands: Commands, volume: Res<Volume>, fontecs: Res<FontECS>) {
-
+    fn sound_settings_menu_setup(
+        mut commands: Commands,
+        volume: Res<Volume>,
+        fontecs: Res<FontECS>,
+    ) {
         let button_style = Style {
             width: Val::Px(200.0),
             height: Val::Px(65.0),
@@ -665,7 +670,7 @@ pub mod menu {
                 parent
                     .spawn(NodeBundle {
                         style: Style {
-                            width:  Val::Percent(100.0),
+                            width: Val::Percent(100.0),
                             height: Val::Percent(100.0),
                             flex_direction: FlexDirection::Column,
                             align_items: AlignItems::Center,
@@ -678,7 +683,7 @@ pub mod menu {
                         parent
                             .spawn(NodeBundle {
                                 style: Style {
-                                    width:  Val::Percent(100.0),
+                                    width: Val::Percent(100.0),
                                     height: Val::Percent(100.0),
                                     align_items: AlignItems::Center,
                                     ..default()
@@ -725,7 +730,7 @@ pub mod menu {
             });
     }
 
-    fn play_menu_setup (mut commands: Commands, fontecs: Res<FontECS>) {
+    fn play_menu_setup(mut commands: Commands, fontecs: Res<FontECS>) {
         let button_style = Style {
             width: Val::Px(200.0),
             height: Val::Px(65.0),
@@ -761,7 +766,7 @@ pub mod menu {
                 parent
                     .spawn(NodeBundle {
                         style: Style {
-                            width:  Val::Percent(100.0),
+                            width: Val::Percent(100.0),
                             height: Val::Percent(100.0),
                             flex_direction: FlexDirection::Column,
                             align_items: AlignItems::Center,
@@ -771,7 +776,7 @@ pub mod menu {
                             },
                             ..default()
                         },
-                        
+
                         ..default()
                     })
                     .with_children(|parent| {
@@ -779,8 +784,7 @@ pub mod menu {
                             (MenuButtonAction::ContinueGame, "Continue"),
                             (MenuButtonAction::LoadGame, "Load Game"),
                             (MenuButtonAction::NewGame, "New Game"),
-                            (MenuButtonAction::BackToMainMenu, "Back")
-
+                            (MenuButtonAction::BackToMainMenu, "Back"),
                         ] {
                             parent
                                 .spawn((
@@ -830,7 +834,7 @@ pub mod menu {
                         game_state.set(GameState::Game);
                         menu_state.set(MenuState::Disabled);
                     }
-        
+
                     MenuButtonAction::Settings => menu_state.set(MenuState::Settings),
                     MenuButtonAction::SettingsDisplay => {
                         menu_state.set(MenuState::SettingsDisplay);
@@ -842,7 +846,6 @@ pub mod menu {
                     MenuButtonAction::BackToSettings => {
                         menu_state.set(MenuState::Settings);
                     }
-
                 }
             }
         }
