@@ -85,7 +85,7 @@ fn player_movement(
 
 fn camera_movement(
     mut playertransform: Query<(&mut Movement, &mut Transform), With<PlayerMarker>>,
-    mut cameratransform: Query<&mut Transform, With<Camera2d>>,
+    mut cameratransform: Query<&mut Transform, (With<Camera2d>, Without<PlayerMarker>)>,
 ) {
     //moving camera
     // Check if there's a player entity

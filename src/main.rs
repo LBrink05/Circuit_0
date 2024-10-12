@@ -38,7 +38,7 @@ fn main() {
         .init_state::<menumanager::GameState>()
         //menumanager
         .add_plugins((
-            menumanager::splash::splash_plugin,
+            menumanager::splash::SplashPlugin,
             menumanager::menu::menu_plugin,
             menumanager::game::game_plugin,
         ))
