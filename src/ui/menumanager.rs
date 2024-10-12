@@ -118,28 +118,28 @@ pub mod splash {
 
 pub mod game {
     use bevy::prelude::*;
-    use super::{despawn_screen, DisplayQuality, GameState, Volume};
-    use crate::textstyle::FontECS;
+    use super::{despawn_screen, GameState};
+    // crate::textstyle::FontECS;
     use crate::game;
 
      // Tag component used to tag entities added on the game screen
      #[derive(Component)]
      struct OnGameScreen;
  
-    //setup menu wise
-    fn game_setup(
-        mut _commands: Commands,
-        _display_quality: Res<DisplayQuality>,
-        _volume: Res<Volume>,
-        _fontecs: Res<FontECS>
+    //return to menu ingame
+    fn game_menu(
+        keyboardinput: Res<ButtonInput<KeyCode>>,
+        mut game_state: ResMut<NextState<GameState>>
     ) {
-        println!("Hacking into the Mainframe...");
+        if keyboardinput.just_pressed(KeyCode::Escape) {
+            game_state.set(GameState::Menu);
+        }
     }
 
-    // This plugin will contain the game. FIX GAME LOOP TOMORROW
+    // This plugin will contain the game.
     pub fn game_plugin(app: &mut App) {
-        app.add_systems(OnEnter(GameState::Game), (game_setup, game::game_setup))
-            .add_systems(Update, game::game_core_plugin.run_if(in_state(GameState::Game)))
+        app.add_systems(OnEnter(GameState::Game), game::game_setup)
+            .add_systems(Update, (game_menu,game::game_core_plugin.run_if(in_state(GameState::Game))))
             .add_systems(OnExit(GameState::Game), despawn_screen::<OnGameScreen>);
     }
 

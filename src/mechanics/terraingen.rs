@@ -7,6 +7,8 @@ const CHUNK_WIDTH: usize = 16*2;
 const CHUNK_HEIGHT: usize = 16*2;
 const TILE_SIZE: f32 = 16.0;
 const CHUNK_SCALE: f32 = 1.0;
+const CHUNK_SLANT_DEGREE: f32 = 10.0;
+
 
 #[derive(Clone, Copy, PartialEq)]
 enum TileType {
@@ -85,7 +87,7 @@ pub fn generatechunk(
                     transform: Transform {
                         translation: Vec3::new((x as f32 * TILE_SIZE) - x_offset, (y as f32 * TILE_SIZE) - y_offset,0.0),
                         scale: Vec3::splat(CHUNK_SCALE),
-                        ..Default::default()
+                        ..default()
                     },
                     ..Default::default()
                 })
