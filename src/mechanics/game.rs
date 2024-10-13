@@ -109,7 +109,7 @@ pub fn game_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     //create player sprite
     commands.spawn(PlayerSprite {
         spritebundle: SpriteBundle {
-            texture: asset_server.load("sprites/player/player.png"),
+            texture: asset_server.load("sprites/player/Zero.png"),
             transform: Transform {
                 translation: Vec3::new(0.0, 0.0, 1.0),
                 scale: Vec3::splat(1.0),

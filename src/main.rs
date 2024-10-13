@@ -1,5 +1,6 @@
 // run command: cargo run --features bevy/dynamic_linking --profile dev
 use bevy::prelude::*;
+use bevy::window::WindowResolution;
 use bevy::DefaultPlugins;
 
 //custom mods
@@ -16,19 +17,22 @@ fn main() {
     App::new()
         .add_plugins(
             DefaultPlugins
+                .set(ImagePlugin::default_nearest(),)
                 //change window title
                 .set(WindowPlugin {
                     primary_window: Some(Window {
                         title: "Circuit_0".to_string(),
+                        resolution: WindowResolution::default().with_scale_factor_override(1.0),
                         ..Default::default()
                     }),
                     ..Default::default()
-                }),
+                }
+                
+            ),
         )
         // One of the most useful things about bevy is that the engine code is very similar to it's
-        // gameplay code, so we can add GameCorePlugin here just like the Default Plugins
-        .add_plugins(game::GameCorePlugin)
         // Insert as resource the initial value for the settings resources
+        .insert_resource(Msaa::Off)
         .insert_resource(menumanager::DisplayQuality::Medium)
         .insert_resource(menumanager::Volume(7))
         //Startup
@@ -42,6 +46,8 @@ fn main() {
             menumanager::menu::menu_plugin,
             menumanager::game::game_plugin,
         ))
+        // gameplay code, so we can add GameCorePlugin here just like the Default Plugins
+        .add_plugins(game::GameCorePlugin)
         .run();
 }
 

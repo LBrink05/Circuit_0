@@ -21,13 +21,14 @@ pub enum DisplayQuality {
 #[derive(Resource, Debug, Component, PartialEq, Eq, Clone, Copy)]
 pub struct Volume(pub u32);
 
-//Text properties //FIX TOMORROW
+//Text & Image properties //FIX TOMORROW
 pub static TEXT_COLOR: Color = Color::srgb(0.9, 0.9, 0.9);
 pub static BACKGROUND_COLOR: Color = Color::srgb(0.72, 0.0, 0.24);
 pub static BACKGROUND_IMAGE: &str = "Art/Background1.png";
+pub static TITLE_IMAGE: &str = "Art/Titleimage.png";
 
 pub mod splash {
-    use super::{despawn_screen, GameState, BACKGROUND_COLOR, BACKGROUND_IMAGE, TEXT_COLOR};
+    use super::{despawn_screen, GameState, BACKGROUND_IMAGE, TEXT_COLOR};
     use crate::textstyle::FontECS;
     use bevy::prelude::*;
 
@@ -81,7 +82,7 @@ pub mod splash {
                 parent.spawn(ImageBundle {
                     style: Style {
                         // This will set the logo to be 200px wide, and auto adjust its height
-                        width: Val::Px(200.0),
+                        width: Val::Percent(20.0),
                         ..default()
                     },
                     image: UiImage::new(icon),
@@ -164,7 +165,7 @@ pub mod game {
 }
 
 pub mod menu {
-    use super::{despawn_screen, DisplayQuality, GameState, Volume, BACKGROUND_COLOR, BACKGROUND_IMAGE, TEXT_COLOR};
+    use super::{despawn_screen, DisplayQuality, GameState, Volume, BACKGROUND_IMAGE, TEXT_COLOR, TITLE_IMAGE};
     use crate::textstyle::FontECS;
     use bevy::{app::AppExit, prelude::*};
 
@@ -354,6 +355,7 @@ pub mod menu {
         };
 
         let background:Handle<Image> = asset_server.load( BACKGROUND_IMAGE);
+        let title: Handle<Image> = asset_server.load(TITLE_IMAGE);
 
         commands
             .spawn((
@@ -402,22 +404,15 @@ pub mod menu {
                         ..default()
                     })
                     .with_children(|parent| {
-                        // Display the game name
-                        parent.spawn(
-                            TextBundle::from_section(
-                                "Circuit_0",
-                                TextStyle {
-                                    font_size: 80.0,
-                                    font: fontecs.fonthandle_1.clone(),
-                                    color: TEXT_COLOR,
-                                    ..default()
-                                },
-                            )
-                            .with_style(Style {
-                                margin: UiRect::all(Val::Px(50.0)),
-                                ..default()
-                            }),
-                        );
+                        //Background Image
+                        parent.spawn(ImageBundle {
+                        style: Style {
+                            width: Val::Percent(20.0),
+                            ..default()
+                        },
+                        image: UiImage::new(title),
+                        ..default()
+                        });
 
                         // Display three buttons for each action available from the main menu:
                         // - play
