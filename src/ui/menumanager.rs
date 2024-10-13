@@ -24,9 +24,10 @@ pub struct Volume(pub u32);
 //Text properties //FIX TOMORROW
 pub static TEXT_COLOR: Color = Color::srgb(0.9, 0.9, 0.9);
 pub static BACKGROUND_COLOR: Color = Color::srgb(0.72, 0.0, 0.24);
+pub static BACKGROUND_IMAGE: &str = "Art/Background1.png";
 
 pub mod splash {
-    use super::{despawn_screen, GameState, BACKGROUND_COLOR, TEXT_COLOR};
+    use super::{despawn_screen, GameState, BACKGROUND_COLOR, BACKGROUND_IMAGE, TEXT_COLOR};
     use crate::textstyle::FontECS;
     use bevy::prelude::*;
 
@@ -56,7 +57,9 @@ pub mod splash {
         // Insert the timer as a resource (did 0.0 to skip splash screen during development)
         commands.insert_resource(SplashTimer(Timer::from_seconds(1.0, TimerMode::Once)));
 
-        let icon = asset_server.load("branding/icon.png");
+        let icon:Handle<Image> = asset_server.load( "branding/icon.png");
+        let background:Handle<Image> = asset_server.load( BACKGROUND_IMAGE);
+        
         // Display the logo
         commands
             .spawn((
@@ -68,7 +71,8 @@ pub mod splash {
                         height: Val::Percent(100.0),
                         ..default()
                     },
-                    background_color: BACKGROUND_COLOR.into(),
+                    //background_color: BACKGROUND_COLOR.into(),
+                
                     ..default()
                 },
                 OnSplashScreen,
@@ -99,6 +103,24 @@ pub mod splash {
                         ..default()
                     }),
                 );
+                //Background Image
+                parent.spawn(ImageBundle {
+                    style: Style {
+                        // This will set the logo to be 200px wide, and auto adjust its height
+                        width: Val::Percent(100.0),
+                        height: Val::Percent(100.0),
+
+                        position_type: PositionType::Absolute,
+                        // Ensure it doesn't exceed the window boundaries
+                        right: Val::Auto,
+                        bottom: Val::Auto,
+                        ..default()
+                    },
+                    image: UiImage::new(background),
+                    
+                    z_index: ZIndex::Global(-1),
+                    ..default()
+                });
             });
     }
 
@@ -142,7 +164,7 @@ pub mod game {
 }
 
 pub mod menu {
-    use super::{despawn_screen, DisplayQuality, GameState, Volume, BACKGROUND_COLOR, TEXT_COLOR};
+    use super::{despawn_screen, DisplayQuality, GameState, Volume, BACKGROUND_COLOR, BACKGROUND_IMAGE, TEXT_COLOR};
     use crate::textstyle::FontECS;
     use bevy::{app::AppExit, prelude::*};
 
@@ -304,7 +326,7 @@ pub mod menu {
 
     fn main_menu_setup(
         mut commands: Commands,
-        _asset_server: Res<AssetServer>,
+        asset_server: Res<AssetServer>,
         fontecs: Res<FontECS>,
     ) {
         // Common style for all buttons on the screen
@@ -331,6 +353,8 @@ pub mod menu {
             ..default()
         };
 
+        let background:Handle<Image> = asset_server.load( BACKGROUND_IMAGE);
+
         commands
             .spawn((
                 NodeBundle {
@@ -346,6 +370,24 @@ pub mod menu {
                 OnMainMenuScreen,
             ))
             .with_children(|parent| {
+                //Background Image
+                parent.spawn(ImageBundle {
+                    style: Style {
+                        // This will set the logo to be 200px wide, and auto adjust its height
+                        width: Val::Percent(100.0),
+                        height: Val::Percent(100.0),
+
+                        position_type: PositionType::Absolute,
+                        // Ensure it doesn't exceed the window boundaries
+                        right: Val::Auto,
+                        bottom: Val::Auto,
+                        ..default()
+                    },
+                    image: UiImage::new(background),
+                    
+                    z_index: ZIndex::Global(-1),
+                    ..default()
+                });
                 parent
                     .spawn(NodeBundle {
                         style: Style {
@@ -355,7 +397,7 @@ pub mod menu {
                             align_items: AlignItems::Center,
                             ..default()
                         },
-                        background_color: BACKGROUND_COLOR.into(),
+                        //background_color: BACKGROUND_COLOR.into(),
 
                         ..default()
                     })
@@ -445,7 +487,7 @@ pub mod menu {
             });
     }
 
-    fn settings_menu_setup(mut commands: Commands, fontecs: Res<FontECS>) {
+    fn settings_menu_setup(mut commands: Commands, fontecs: Res<FontECS>, asset_server: Res<AssetServer>) {
         let button_style = Style {
             width: Val::Px(200.0),
             height: Val::Px(65.0),
@@ -462,6 +504,8 @@ pub mod menu {
             ..default()
         };
 
+        let background:Handle<Image> = asset_server.load( BACKGROUND_IMAGE);
+        
         commands
             .spawn((
                 NodeBundle {
@@ -472,12 +516,30 @@ pub mod menu {
                         justify_content: JustifyContent::Center,
                         ..default()
                     },
-                    background_color: BACKGROUND_COLOR.into(),
+                    //background_color: BACKGROUND_COLOR.into(),
                     ..default()
                 },
                 OnSettingsMenuScreen,
             ))
             .with_children(|parent| {
+                //Background Image
+                parent.spawn(ImageBundle {
+                    style: Style {
+                        // This will set the logo to be 200px wide, and auto adjust its height
+                        width: Val::Percent(100.0),
+                        height: Val::Percent(100.0),
+
+                        position_type: PositionType::Absolute,
+                        // Ensure it doesn't exceed the window boundaries
+                        right: Val::Auto,
+                        bottom: Val::Auto,
+                        ..default()
+                    },
+                    image: UiImage::new(background),
+                    
+                    z_index: ZIndex::Global(-1),
+                    ..default()
+                });
                 parent
                     .spawn(NodeBundle {
                         style: Style {
@@ -523,6 +585,7 @@ pub mod menu {
         mut commands: Commands,
         display_quality: Res<DisplayQuality>,
         fontecs: Res<FontECS>,
+        asset_server: Res<AssetServer>
     ) {
         let button_style = Style {
             width: Val::Px(200.0),
@@ -539,6 +602,8 @@ pub mod menu {
             ..default()
         };
 
+        let background:Handle<Image> = asset_server.load( BACKGROUND_IMAGE);
+
         commands
             .spawn((
                 NodeBundle {
@@ -554,6 +619,24 @@ pub mod menu {
                 OnDisplaySettingsMenuScreen,
             ))
             .with_children(|parent| {
+                //Background Image
+                parent.spawn(ImageBundle {
+                    style: Style {
+                        // This will set the logo to be 200px wide, and auto adjust its height
+                        width: Val::Percent(100.0),
+                        height: Val::Percent(100.0),
+
+                        position_type: PositionType::Absolute,
+                        // Ensure it doesn't exceed the window boundaries
+                        right: Val::Auto,
+                        bottom: Val::Auto,
+                        ..default()
+                    },
+                    image: UiImage::new(background),
+                    
+                    z_index: ZIndex::Global(-1),
+                    ..default()
+                });
                 parent
                     .spawn(NodeBundle {
                         style: Style {
@@ -563,7 +646,7 @@ pub mod menu {
                             align_items: AlignItems::Center,
                             ..default()
                         },
-                        background_color: BACKGROUND_COLOR.into(),
+                        //background_color: BACKGROUND_COLOR.into(),
                         ..default()
                     })
                     .with_children(|parent| {
@@ -577,7 +660,7 @@ pub mod menu {
                                     align_items: AlignItems::Center,
                                     ..default()
                                 },
-                                background_color: BACKGROUND_COLOR.into(),
+                                
                                 ..default()
                             })
                             .with_children(|parent| {
@@ -636,6 +719,8 @@ pub mod menu {
         mut commands: Commands,
         volume: Res<Volume>,
         fontecs: Res<FontECS>,
+        asset_server: Res<AssetServer>
+        
     ) {
         let button_style = Style {
             width: Val::Px(200.0),
@@ -652,6 +737,8 @@ pub mod menu {
             ..default()
         };
 
+        let background:Handle<Image> = asset_server.load( BACKGROUND_IMAGE);
+
         commands
             .spawn((
                 NodeBundle {
@@ -667,6 +754,24 @@ pub mod menu {
                 OnSoundSettingsMenuScreen,
             ))
             .with_children(|parent| {
+                //Background Image
+                parent.spawn(ImageBundle {
+                    style: Style {
+                        // This will set the logo to be 200px wide, and auto adjust its height
+                        width: Val::Percent(100.0),
+                        height: Val::Percent(100.0),
+
+                        position_type: PositionType::Absolute,
+                        // Ensure it doesn't exceed the window boundaries
+                        right: Val::Auto,
+                        bottom: Val::Auto,
+                        ..default()
+                    },
+                    image: UiImage::new(background),
+                    
+                    z_index: ZIndex::Global(-1),
+                    ..default()
+                });
                 parent
                     .spawn(NodeBundle {
                         style: Style {
@@ -676,7 +781,7 @@ pub mod menu {
                             align_items: AlignItems::Center,
                             ..default()
                         },
-                        background_color: BACKGROUND_COLOR.into(),
+                        //background_color: BACKGROUND_COLOR.into(),
                         ..default()
                     })
                     .with_children(|parent| {
@@ -688,7 +793,7 @@ pub mod menu {
                                     align_items: AlignItems::Center,
                                     ..default()
                                 },
-                                background_color: BACKGROUND_COLOR.into(),
+                                //background_color: BACKGROUND_COLOR.into(),
                                 ..default()
                             })
                             .with_children(|parent| {
@@ -730,7 +835,7 @@ pub mod menu {
             });
     }
 
-    fn play_menu_setup(mut commands: Commands, fontecs: Res<FontECS>) {
+    fn play_menu_setup(mut commands: Commands, fontecs: Res<FontECS>, asset_server: Res<AssetServer>) {
         let button_style = Style {
             width: Val::Px(200.0),
             height: Val::Px(65.0),
@@ -747,6 +852,8 @@ pub mod menu {
             ..default()
         };
 
+        let background:Handle<Image> = asset_server.load( BACKGROUND_IMAGE);
+
         commands
             .spawn((
                 NodeBundle {
@@ -757,12 +864,30 @@ pub mod menu {
                         justify_content: JustifyContent::Center,
                         ..default()
                     },
-                    background_color: BACKGROUND_COLOR.into(),
+                    //background_color: BACKGROUND_COLOR.into(),
                     ..default()
                 },
                 OnPlayMenuScreen,
             ))
             .with_children(|parent| {
+                //Background Image
+                parent.spawn(ImageBundle {
+                    style: Style {
+                        // This will set the logo to be 200px wide, and auto adjust its height
+                        width: Val::Percent(100.0),
+                        height: Val::Percent(100.0),
+
+                        position_type: PositionType::Absolute,
+                        // Ensure it doesn't exceed the window boundaries
+                        right: Val::Auto,
+                        bottom: Val::Auto,
+                        ..default()
+                    },
+                    image: UiImage::new(background),
+                    
+                    z_index: ZIndex::Global(-1),
+                    ..default()
+                });
                 parent
                     .spawn(NodeBundle {
                         style: Style {
